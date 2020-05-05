@@ -85,6 +85,8 @@ class BaseEnv(gym.Env):
 
     def reset(self):
         self.seed()
+        self.obstacles = []
+        self.obstacles_obs = []
         #TODO: Load parameters from file
         ws = [
             Obstacle([0.08071720797526379, 0.01, 0.0258863013653452], [0.28880693169373045, 0, 0.13432395598779545], 1.3412717893000832),
@@ -95,7 +97,7 @@ class BaseEnv(gym.Env):
 
         self.load_workspace(ws)
 
-        self.scene.start_viz()
+        # self.scene.start_viz()
 
         return self.compute_observation()
 
@@ -132,8 +134,7 @@ class BaseEnv(gym.Env):
         return distance < self.goal_sensitivity
 
     def step(self, action):
-        d_joints = action * self.action_step_size
-
+        d_joints = np.array(action) * self.action_step_size
         next_unbounded_joints = self.robot.get_joints() + d_joints
         next_joints = self.robot.truncate_joints(next_unbounded_joints)
 
@@ -145,19 +146,19 @@ class BaseEnv(gym.Env):
 
         if self.robot.check_self_collision():
             reward += self.dict_reward['collision']
-            info = {'result': ResultCode.SELF_COLLISION}
+            info = {'result': ResultCode.SELF_COLLISION.value}
 
         elif self.scene.check_collision(self.robot, self.obstacles):
             reward += self.dict_reward['collision']
-            info = {'result': ResultCode.OBSTACLE_COLLISION}
+            info = {'result': ResultCode.OBSTACLE_COLLISION.value}
 
         elif self.goal_reached():
             reward += self.dict_reward['goal']
-            info = {'result': ResultCode.SUCCESS}
+            info = {'result': ResultCode.SUCCESS.value}
 
         else:
             reward += self.dict_reward['free']
-            info = {'result': ResultCode.NON_TERMINAL}
+            info = {'result': ResultCode.NON_TERMINAL.value}
             done = False
 
         if self.truncate_penalty > 0.0:
@@ -169,21 +170,19 @@ class BaseEnv(gym.Env):
 
     def compute_observation(self):
         observation = {
-            "achieved_goal": self.robot.get_link_pose(5),
-            "desired_goal": self.goal_pose,
-            "representation_goal": self.represent_goal(),
-            "observation": np.concatenate((self.represent_obstacles(), self.robot.get_representation())),
+            "achieved_goal": self.robot.get_link_pose(5).tolist(),
+            "desired_goal": self.goal_pose.tolist(),
+            "representation_goal": self.represent_goal().tolist(),
+            "observation": np.concatenate((self.represent_obstacles(), self.robot.get_representation())).tolist(),
         }
 
         return observation
 
     def close(self):
-        pass
-
+        self.scene.destroy()
 
 if __name__ == "__main__":
     env = BaseEnv()
     obs = env.reset()
-    print(obs)
     # plt.imshow(obs)
     # plt.show()

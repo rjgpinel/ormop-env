@@ -19,16 +19,17 @@ class RandomAgent:
 if __name__ == "__main__":
     env = BaseEnv()
     obs = env.reset()
-
     agent = RandomAgent(5)
 
     horizon = 100
 
-    print(obs)
+    times = []
     for i in range(horizon):
-        action = agent.get_action(obs)
+        # action = agent.get_action(obs)
+        action = [0, 0, 0, 0, 0]
+        now = time.time()
         obs, reward, done, info = env.step(action)
-        print(obs)
-        time.sleep(0.5)
+        times.append(time.time() - now)
         if done:
             exit()
+    print(np.mean(times))

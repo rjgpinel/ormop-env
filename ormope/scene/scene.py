@@ -29,3 +29,6 @@ class Scene:
                 if self.openrave_sim.CheckCollision(robot.controller, obstacle.body):
                     return True
         return False
+
+    def destroy(self):
+        RaveDestroy()
